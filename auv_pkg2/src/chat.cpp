@@ -1,16 +1,24 @@
-#include<ros/ros.h>//angular brackets for header files which comes in_built in the compiler
-#include<std_msgs/String.h>
-#include "auv_pkg/custom.h"//"" for header files in the current directory
 #include<sstream>
 #include<iostream>
 #include<cstdio>
+#include<std_msgs/String.h>
 #include<bits/stdc++.h>
 #include<string>
-using namespace std;
+#include<ros/ros.h>
 
-int main(int argc, char **argv)
+using namespace std;
+//Function prototypes:
+void custom(const string& message);
+void cb(const std_msgs::String::ConstPtr& msg);
+
+//Global declaration of node_name to avoid passing to functions
+string node_name;
+//global publisher object to use in custom()
+ros::Publisher publ ;
+
+void main(int argc, char** argv)
 {
-    class x
+   /* class x
    {
         public:
         void cb(const std_msgs::String::ConstPtr& ptr)
@@ -18,36 +26,43 @@ int main(int argc, char **argv)
             cout<<(ptr->data.c_str())<<endl;
         }
         void unsub(void){
-    sub.shutdown();
+    sub.shutdown();//tried unsubbing and resubbing
         }
-   };
-    string name;
-    cout<<"Enter node name: ";
-    cin>>name;
-ros::init(argc,argv,name);
-ros::NodeHandle nh;
-ros::Publisher pub = nh.advertise<auv_pkg::custom>("tpc",1000);
-     x var;
-ros::Subscriber sub = nr.subscribe("chatter", 1000, &x::cb, &var);
-//ros::Subscriber sub = nh.subscribe("data",1000,cb);
-ros::Rate loop_rate(10);
-cout<<"Node has been initialized"<<endl;
+   };*/
+    //taking node_name from user
+  cout << "Enter your node name: ";
+  getline(cin, node_name);
 
-while(ros::ok())
-{
-    auv_pkg::custom msg;
-string message;
-cout<<"Ready to take input\n";
-getline(cin,message);
-cout<<"\" "<<message<<" \""<<" will be sent\n";
-msg.name = message;
-pub.publish(msg);
-ros::spin();
-//sub.shutdown();
-//sub = nh.subscribe("tpc",1000,cb);
-ros::spinOnce();
-loop_rate.sleep();
+  ros::init(argc, argv, node_name);
+  ros::NodeHandle n;
+
+    //Publishing and subscribing to the same topic
+  ros::Subscriber subs = n.subscribe("tpc", 1000, cb);
+  publ = n.advertise<std_msgs::String>("tpc", 1000);
+
+  ros::Rate loop_rate(10);
+
+  while (ros::ok())
+  {
+    string msg;
+    cout << "your message: ";
+    getline(cin, msg);
+    //sending message to get published
+    custom(msg);
+
+    ros::spinOnce();//for callbacks
+    loop_rate.sleep();
+  }
+
 }
-
-return 0;
+void custom(const string& message)
+{
+  std_msgs::String msg;
+  //string concatenation
+  msg.data = "[" + node_name + "] " + message;
+  publ.publish(msg);
+}
+void cb(const std_msgs::String::ConstPtr& msg)
+{
+  cout<<("%s %s", node_name.c_str(), msg->data.c_str())<<endl;
 }
